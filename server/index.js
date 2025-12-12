@@ -93,48 +93,48 @@ const cosineSimilarity = (vecA, vecB) => {
 // --- API ROUTES ---
 
 // 1. SEARCH ROUTE
+// SEARCH ROUTE
 app.post('/api/search', upload.single('image'), async (req, res) => {
     try {
         console.log("🔍 analyzing image...");
-        
-        // 1. Get vector of uploaded image
         const queryVector = await getVector(req.file.path);
-        
-        // 2. Get all products from DB
         const allProducts = await Product.find({});
         
-        let bestMatch = null;
-        let bestScore = -1;
-
-        // 3. Compare with every product
-        allProducts.forEach(product => {
-            if (!product.vector || product.vector.length === 0) return;
-            
-            const score = cosineSimilarity(queryVector, product.vector);
-            // Log scores to help debug
-            // console.log(`Score for ${product.name}: ${score}`);
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = product;
-            }
+        // Calculate score for EVERY product
+        const results = allProducts.map(product => {
+            if (!product.vector || product.vector.length === 0) return { product, score: 0 };
+            return {
+                product,
+                score: cosineSimilarity(queryVector, product.vector)
+            };
         });
 
-        // 4. Threshold (0.85 is a good starting point for "Very Similar")
-        if (bestMatch && bestScore > 0.75) {
-            console.log(`✅ Found: ${bestMatch.name} (${bestScore.toFixed(2)})`);
+        // Sort by highest score
+        results.sort((a, b) => b.score - a.score);
+
+        // Get the winner
+        const bestMatch = results[0];
+
+        // LOGIC UPGRADE:
+        // 1. Score must be decent (> 0.75)
+        // 2. The winner must be significantly better than the runner-up (Margin check)
+        const runnerUp = results[1];
+        const margin = runnerUp ? (bestMatch.score - runnerUp.score) : 1.0;
+
+        console.log(`Top Match: ${bestMatch.product.name} (${bestMatch.score.toFixed(2)})`);
+        if (runnerUp) console.log(`Runner Up: ${runnerUp.product.name} (${runnerUp.score.toFixed(2)})`);
+
+        // If we are mostly sure (>0.85) OR (reasonable score >0.78 AND big margin >0.05)
+        if (bestMatch.score > 0.7 || (bestMatch.score > 0.7 && margin > 0.05)) {
             res.json({
                 found: true,
                 product: {
-                    id: bestMatch._id,
-                    name: bestMatch.name,
-                    price: bestMatch.price,
-                    category: "Identified Item",
-                    confidence: bestScore
+                    ...bestMatch.product.toObject(),
+                    confidence: bestMatch.score
                 }
             });
         } else {
-            console.log("❌ No match found.");
+            console.log("❌ result ambiguous.");
             res.json({ found: false });
         }
     } catch (err) {
