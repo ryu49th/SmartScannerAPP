@@ -1,0 +1,41 @@
+# --- Dependencies ---
+node_modules/
+package-lock.json
+# Keep package-lock.json if you want to lock versions, but usually 
+# node_modules is the most critical one to ignore. 
+# (Standard practice is to KEEP package-lock.json, remove the line above if you want to track it)
+
+# --- Frontend Build ---
+dist/
+dist-ssr/
+*.local
+
+# --- Backend Uploads & storage ---
+server/uploads/
+uploads/
+
+# --- Python / AI (Important for your venv) ---
+venv/
+__pycache__/
+*.py[cod]
+*.pt  # Ignore heavy PyTorch model files (download them on deploy instead)
+
+# --- Environment Variables (Security) ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# --- Editor / System ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
