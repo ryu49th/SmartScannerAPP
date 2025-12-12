@@ -10,7 +10,7 @@ export interface Product {
 }
 
 // Point to your running server
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://192.168.1.35:3000/api';
 
 // HELPER: Convert Webcam Base64 -> Blob (File)
 const base64ToBlob = async (base64: string) => {
