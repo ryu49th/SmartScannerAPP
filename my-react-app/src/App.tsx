@@ -20,7 +20,20 @@ export default function App() {
   const [regSuccess, setRegSuccess] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
 
+  // Helper: Text-to-Speech
+  const speak = (text: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      // Optional: Set voice properties
+      utterance.rate = 1.0; 
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   // 1. Handle Scanning (Sent to Backend)
+  // Inside handleScan...
   const handleScan = async (image: string) => {
       setLoading(true);
       setProduct(null);
@@ -28,8 +41,17 @@ export default function App() {
 
       try {
         const result = await api.searchProduct(image);
-        if (result) setProduct(result);
-        else setError("Product not found.");
+        if (result) {
+          setProduct(result);
+          
+          // --- NEW: SPEAK! ---
+          // "I found Coke Zero. Price is 25 Baht."
+          speak(`I found ${result.name}. Price is ${result.price} Baht.`);
+          
+        } else {
+          setError("Product not found.");
+          speak("Sorry, I don't recognize that.");
+        }
       } catch {
         setError("System Error.");
       } finally {
