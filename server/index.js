@@ -5,10 +5,15 @@ const multer = require('multer');
 const path = require('path');
 const { spawn } = require('child_process'); // <--- NEW: To run Python
 
+const fs = require('fs');
+const https = require('https');
+
 // --- SETUP ---
 const app = express();
+
+
 // --- MULTER CONFIG (FIXED) ---
-const storage = multer.diskStorage({
+const storage = multer.diskStorage({    
   destination: function (req, file, cb) {
     cb(null, 'uploads/')
   },
@@ -18,7 +23,15 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '.jpg')
   }
 })
-const upload = multer({ storage: storage });
+// Create 'uploads' folder if it doesn't exist
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir);
+    console.log("📂 Created 'uploads' folder inside Docker");
+}
+// ----------------------
+
+const upload = multer({ dest: 'uploads/' });
 
 app.use(cors());
 app.use(express.json());
@@ -170,6 +183,26 @@ app.post('/api/register', upload.single('image'), async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-  console.log('🚀 Server running on port 3000');
+
+// --- SERVE FRONTEND (Added for Deployment) ---
+
+// Tell Node to serve the files inside 'public' (which contains our React build)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Any request that is NOT an API request should go to React
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// --- START HTTPS SERVER ---
+
+// Load the certificates we just created
+const httpsOptions = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
+// Create HTTPS server instead of HTTP
+https.createServer(httpsOptions, app).listen(3000, () => {
+  console.log('🚀 SECURE Server running on https://localhost:3000'); // Note the 's'
 });
