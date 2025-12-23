@@ -31,7 +31,7 @@ if (!fs.existsSync(uploadDir)){
 }
 // ----------------------
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: storage });
 
 app.use(cors());
 app.use(express.json());

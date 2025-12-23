@@ -29,8 +29,8 @@ __pycache__/
 *.key
 *.crt
 # Explicitly ignoring the ones found in your tree
-server/cert.pem
-server/key.pem
+cert.pem
+key.pem
 
 # --- Logs ---
 npm-debug.log*
